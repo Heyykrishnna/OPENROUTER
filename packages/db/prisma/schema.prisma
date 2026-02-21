@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,4 +8,96 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int               @id @default(autoincrement())
+  email              String            @unique
+  password           String
+  apiKeys            ApiKey[]
+  credits            Int               @default(0)
+  onrampTransactions                   OnrampTransaction[]
+  conversations      Conversation[]
+}
+
+model ApiKey {
+  id       Int     @id @default(autoincrement())
+  userId   Int
+  name     String
+  apiKey   String  @unique
+  disabled Boolean @default(false)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+}
+
+model Company {
+  id      Int    @id @default(autoincrement())
+  name    String @unique
+  website String
+
+  models Model[]
+}
+
+model Model {
+  id        Int @id @default(autoincrement())
+  name      String
+  companyId Int
+
+  company              Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  modelProviderMappings ModelProviderMapping[]
+  conversations        Conversation[]
+}
+
+model Provider {
+  id      Int    @id @default(autoincrement())
+  name    String @unique
+  website String
+
+  modelProviderMappings ModelProviderMapping[]
+}
+
+model ModelProviderMapping {
+  id               Int   @id @default(autoincrement())
+  modelId          Int
+  providerId       Int
+  inputTokenCost   Int
+  outputTokenCost  Int
+
+  model         Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  provider      Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@unique([modelId, providerId])
+}
+
+enum TransactionStatus {
+  processing
+  success
+  failed
+}
+
+model OnrampTransaction {
+  id     Int               @id @default(autoincrement())
+  userId Int
+  amount Int
+  status TransactionStatus @default(processing)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id                   Int    @id @default(autoincrement())
+  userId               Int
+  apiKeyId             Int
+  modelProviderMappingId Int
+  input                String
+  output               String
+  inputTokenCount      Int
+  outputTokenCount     Int
+
+  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKey                 ApiKey               @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  modelProviderMapping   ModelProviderMapping @relation(fields: [modelProviderMappingId], references: [id], onDelete: Cascade)
 }
