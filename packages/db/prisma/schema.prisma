@@ -2,22 +2,21 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                 Int               @id @default(autoincrement())
-  email              String            @unique
+  id                 Int                 @id @default(autoincrement())
+  email              String              @unique
   password           String
   apiKeys            ApiKey[]
-  credits            Int               @default(0)
-  onrampTransactions                   OnrampTransaction[]
+  credits            Int                 @default(0)
+  onrampTransactions OnrampTransaction[]
   conversations      Conversation[]
 }
 
@@ -41,13 +40,13 @@ model Company {
 }
 
 model Model {
-  id        Int @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   name      String
   companyId Int
 
-  company              Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company               Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   modelProviderMappings ModelProviderMapping[]
-  conversations        Conversation[]
+  conversations         Conversation[]
 }
 
 model Provider {
@@ -59,14 +58,14 @@ model Provider {
 }
 
 model ModelProviderMapping {
-  id               Int   @id @default(autoincrement())
-  modelId          Int
-  providerId       Int
-  inputTokenCost   Int
-  outputTokenCost  Int
+  id              Int @id @default(autoincrement())
+  modelId         Int
+  providerId      Int
+  inputTokenCost  Int
+  outputTokenCost Int
 
-  model         Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  provider      Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  model         Model          @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  provider      Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
   conversations Conversation[]
 
   @@unique([modelId, providerId])
@@ -88,16 +87,18 @@ model OnrampTransaction {
 }
 
 model Conversation {
-  id                   Int    @id @default(autoincrement())
-  userId               Int
-  apiKeyId             Int
+  id                     Int    @id @default(autoincrement())
+  userId                 Int
+  apiKeyId               Int
+  modelId                Int
   modelProviderMappingId Int
-  input                String
-  output               String
-  inputTokenCount      Int
-  outputTokenCount     Int
+  input                  String
+  output                 String
+  inputTokenCount        Int
+  outputTokenCount       Int
 
-  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  apiKey                 ApiKey               @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  modelProviderMapping   ModelProviderMapping @relation(fields: [modelProviderMappingId], references: [id], onDelete: Cascade)
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKey               ApiKey               @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  model                Model                @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  modelProviderMapping ModelProviderMapping @relation(fields: [modelProviderMappingId], references: [id], onDelete: Cascade)
 }
